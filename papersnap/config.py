@@ -22,7 +22,7 @@ class Config:
     AZURE_OPENAI_DEPLOYMENT_NAME: Optional[str] = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
     
     # Model Configuration
-    MODEL_NAME: str = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
+    MODEL_NAME: str = os.getenv("MODEL_NAME", "gpt-4o")
     MODEL_TEMPERATURE: float = float(os.getenv("MODEL_TEMPERATURE", "0.1"))
     MAX_TOKENS: int = int(os.getenv("MAX_TOKENS", "4000"))
     
