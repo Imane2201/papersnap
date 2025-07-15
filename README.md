@@ -235,14 +235,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ArXiv integration using [arxiv-py](https://github.com/lukasschwab/arxiv.py)
 - OpenAI GPT models for summarization
 
-## Support
-
-If you encounter any issues or have questions:
-
-1. Check the [Issues](https://github.com/yourusername/papersnap/issues) page
-2. Create a new issue if needed
-3. Join our [Discussions](https://github.com/yourusername/papersnap/discussions)
-
----
 
 Made with ❤️ by Imane LABBASSI
