@@ -8,8 +8,6 @@ from typing import Dict, Any, List
 from datetime import datetime
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.chains.summarize import load_summarize_chain
-from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.docstore.document import Document
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
@@ -125,16 +123,14 @@ class PaperSummarizer:
             """
         )
         
-        chain = LLMChain(llm=self.llm, prompt=prompt)
-        
         # Use first few chunks for abstract generation
         content_sample = ' '.join([doc.page_content for doc in 
                                   self.text_splitter.create_documents([paper_content])[:3]])
         
-        result = chain.run(text=content_sample[:4000])
+        result = self.llm.invoke(prompt.format(text=content_sample[:4000]))
         if result is None:
             return "Abstract could not be generated"
-        return result.strip()
+        return result.content.strip()
     
     def _extract_key_contributions(self, documents: List[Document]) -> List[str]:
         """Extract key contributions from the paper"""
@@ -150,16 +146,14 @@ class PaperSummarizer:
             """
         )
         
-        chain = LLMChain(llm=self.llm, prompt=prompt)
-        
         # Combine relevant chunks
         combined_text = self._combine_relevant_chunks(documents, ["contribution", "novel", "propose"])
         
-        result = chain.run(text=combined_text)
+        result = self.llm.invoke(prompt.format(text=combined_text))
         if result is None:
             return ["Key contributions could not be extracted"]
         
-        contributions = [item.strip() for item in result.split('\n') if item.strip() and not item.strip().startswith('Key')]
+        contributions = [item.strip() for item in result.content.split('\n') if item.strip() and not item.strip().startswith('Key')]
         
         return contributions[:5]  # Limit to 5 contributions
     
@@ -177,15 +171,13 @@ class PaperSummarizer:
             """
         )
         
-        chain = LLMChain(llm=self.llm, prompt=prompt)
-        
         # Combine relevant chunks
         combined_text = self._combine_relevant_chunks(documents, ["method", "approach", "algorithm", "experiment"])
         
-        result = chain.run(text=combined_text)
+        result = self.llm.invoke(prompt.format(text=combined_text))
         if result is None:
             return "Methodology could not be extracted"
-        return result.strip()
+        return result.content.strip()
     
     def _extract_results(self, documents: List[Document]) -> str:
         """Extract results from the paper"""
@@ -201,15 +193,13 @@ class PaperSummarizer:
             """
         )
         
-        chain = LLMChain(llm=self.llm, prompt=prompt)
-        
         # Combine relevant chunks
         combined_text = self._combine_relevant_chunks(documents, ["result", "finding", "performance", "evaluation"])
         
-        result = chain.run(text=combined_text)
+        result = self.llm.invoke(prompt.format(text=combined_text))
         if result is None:
             return "Results could not be extracted"
-        return result.strip()
+        return result.content.strip()
     
     def _extract_limitations(self, documents: List[Document]) -> str:
         """Extract limitations from the paper"""
@@ -224,15 +214,13 @@ class PaperSummarizer:
             """
         )
         
-        chain = LLMChain(llm=self.llm, prompt=prompt)
-        
         # Combine relevant chunks
         combined_text = self._combine_relevant_chunks(documents, ["limitation", "constraint", "shortcoming", "weakness"])
         
-        result = chain.run(text=combined_text)
+        result = self.llm.invoke(prompt.format(text=combined_text))
         if result is None:
             return "No specific limitations mentioned in the paper."
-        return result.strip() if result.strip() else "No specific limitations mentioned in the paper."
+        return result.content.strip() if result.content.strip() else "No specific limitations mentioned in the paper."
     
     def _extract_future_work(self, documents: List[Document]) -> str:
         """Extract future work from the paper"""
@@ -247,15 +235,13 @@ class PaperSummarizer:
             """
         )
         
-        chain = LLMChain(llm=self.llm, prompt=prompt)
-        
         # Combine relevant chunks
         combined_text = self._combine_relevant_chunks(documents, ["future", "next", "extension", "direction"])
         
-        result = chain.run(text=combined_text)
+        result = self.llm.invoke(prompt.format(text=combined_text))
         if result is None:
             return "No specific future work mentioned in the paper."
-        return result.strip() if result.strip() else "No specific future work mentioned in the paper."
+        return result.content.strip() if result.content.strip() else "No specific future work mentioned in the paper."
     
     def _generate_overall_summary(self, documents: List[Document]) -> str:
         """Generate an overall summary of the paper"""
@@ -271,15 +257,13 @@ class PaperSummarizer:
             """
         )
         
-        chain = LLMChain(llm=self.llm, prompt=prompt)
+        # Combine all documents for overall summary
+        combined_text = ' '.join([doc.page_content for doc in documents[:10]])  # Use first 10 chunks
         
-        # Use summarize chain for better handling of long documents
-        summarize_chain = load_summarize_chain(self.llm, chain_type="map_reduce")
-        
-        result = summarize_chain.run(documents)
+        result = self.llm.invoke(prompt.format(text=combined_text[:8000]))
         if result is None:
             return "Overall summary could not be generated"
-        return result.strip()
+        return result.content.strip()
     
     def _extract_technical_details(self, documents: List[Document]) -> Dict[str, str]:
         """Extract technical details like datasets, tools, etc."""
@@ -310,16 +294,14 @@ class PaperSummarizer:
         
         try:
             # Extract datasets
-            dataset_chain = LLMChain(llm=self.llm, prompt=dataset_prompt)
             dataset_text = self._combine_relevant_chunks(documents, ["dataset", "benchmark", "data"])
-            dataset_result = dataset_chain.run(text=dataset_text)
-            details["datasets"] = dataset_result.strip() if dataset_result else "Not specified"
+            dataset_result = self.llm.invoke(dataset_prompt.format(text=dataset_text))
+            details["datasets"] = dataset_result.content.strip() if dataset_result else "Not specified"
             
             # Extract tools
-            tools_chain = LLMChain(llm=self.llm, prompt=tools_prompt)
             tools_text = self._combine_relevant_chunks(documents, ["tool", "framework", "library", "software"])
-            tools_result = tools_chain.run(text=tools_text)
-            details["tools"] = tools_result.strip() if tools_result else "Not specified"
+            tools_result = self.llm.invoke(tools_prompt.format(text=tools_text))
+            details["tools"] = tools_result.content.strip() if tools_result else "Not specified"
             
         except Exception as e:
             logger.warning(f"Error extracting technical details: {e}")

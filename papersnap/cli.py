@@ -117,6 +117,10 @@ def summarize(pdf: Optional[Path], arxiv: Optional[str], output: Optional[Path],
             # Clean title for filename
             title = ''.join(c for c in title if c.isalnum() or c in ('-', '_'))[:50]
             output = Config.OUTPUT_DIR / f"{title}{file_extension}"
+        else:
+            # If output is specified but it's a relative path, make it relative to output directory
+            if not output.is_absolute():
+                output = Config.OUTPUT_DIR / output
         
         # Write output
         output.parent.mkdir(parents=True, exist_ok=True)
