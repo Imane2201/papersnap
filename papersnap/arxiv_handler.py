@@ -121,8 +121,8 @@ class ArxivHandler:
         # Handle various ArXiv URL formats
         patterns = [
             r'arxiv\.org/abs/([^/?]+)',
-            r'arxiv\.org/pdf/([^/?]+)',
-            r'arxiv\.org/(?:abs|pdf)/([^/?]+)\.pdf',
+            r'arxiv\.org/pdf/([^/?]+?)(?:\.pdf)?',
+            r'arxiv\.org/(?:abs|pdf)/([^/?]+?)(?:\.pdf)?',
             r'arxiv:([^/?]+)',
         ]
         

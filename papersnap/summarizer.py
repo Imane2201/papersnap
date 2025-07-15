@@ -132,6 +132,8 @@ class PaperSummarizer:
                                   self.text_splitter.create_documents([paper_content])[:3]])
         
         result = chain.run(text=content_sample[:4000])
+        if result is None:
+            return "Abstract could not be generated"
         return result.strip()
     
     def _extract_key_contributions(self, documents: List[Document]) -> List[str]:
@@ -154,6 +156,9 @@ class PaperSummarizer:
         combined_text = self._combine_relevant_chunks(documents, ["contribution", "novel", "propose"])
         
         result = chain.run(text=combined_text)
+        if result is None:
+            return ["Key contributions could not be extracted"]
+        
         contributions = [item.strip() for item in result.split('\n') if item.strip() and not item.strip().startswith('Key')]
         
         return contributions[:5]  # Limit to 5 contributions
@@ -178,6 +183,8 @@ class PaperSummarizer:
         combined_text = self._combine_relevant_chunks(documents, ["method", "approach", "algorithm", "experiment"])
         
         result = chain.run(text=combined_text)
+        if result is None:
+            return "Methodology could not be extracted"
         return result.strip()
     
     def _extract_results(self, documents: List[Document]) -> str:
@@ -200,6 +207,8 @@ class PaperSummarizer:
         combined_text = self._combine_relevant_chunks(documents, ["result", "finding", "performance", "evaluation"])
         
         result = chain.run(text=combined_text)
+        if result is None:
+            return "Results could not be extracted"
         return result.strip()
     
     def _extract_limitations(self, documents: List[Document]) -> str:
@@ -221,6 +230,8 @@ class PaperSummarizer:
         combined_text = self._combine_relevant_chunks(documents, ["limitation", "constraint", "shortcoming", "weakness"])
         
         result = chain.run(text=combined_text)
+        if result is None:
+            return "No specific limitations mentioned in the paper."
         return result.strip() if result.strip() else "No specific limitations mentioned in the paper."
     
     def _extract_future_work(self, documents: List[Document]) -> str:
@@ -242,6 +253,8 @@ class PaperSummarizer:
         combined_text = self._combine_relevant_chunks(documents, ["future", "next", "extension", "direction"])
         
         result = chain.run(text=combined_text)
+        if result is None:
+            return "No specific future work mentioned in the paper."
         return result.strip() if result.strip() else "No specific future work mentioned in the paper."
     
     def _generate_overall_summary(self, documents: List[Document]) -> str:
@@ -264,6 +277,8 @@ class PaperSummarizer:
         summarize_chain = load_summarize_chain(self.llm, chain_type="map_reduce")
         
         result = summarize_chain.run(documents)
+        if result is None:
+            return "Overall summary could not be generated"
         return result.strip()
     
     def _extract_technical_details(self, documents: List[Document]) -> Dict[str, str]:
@@ -297,12 +312,14 @@ class PaperSummarizer:
             # Extract datasets
             dataset_chain = LLMChain(llm=self.llm, prompt=dataset_prompt)
             dataset_text = self._combine_relevant_chunks(documents, ["dataset", "benchmark", "data"])
-            details["datasets"] = dataset_chain.run(text=dataset_text).strip()
+            dataset_result = dataset_chain.run(text=dataset_text)
+            details["datasets"] = dataset_result.strip() if dataset_result else "Not specified"
             
             # Extract tools
             tools_chain = LLMChain(llm=self.llm, prompt=tools_prompt)
             tools_text = self._combine_relevant_chunks(documents, ["tool", "framework", "library", "software"])
-            details["tools"] = tools_chain.run(text=tools_text).strip()
+            tools_result = tools_chain.run(text=tools_text)
+            details["tools"] = tools_result.strip() if tools_result else "Not specified"
             
         except Exception as e:
             logger.warning(f"Error extracting technical details: {e}")
